@@ -3,11 +3,247 @@
 #include<fstream>
 #include<vector>
 #include<iomanip>
+#include<cmath>
+
 using namespace std;
+
+
+
+float applyFunction(float variablePar, vector<float> functionPar) {
+
+	float returnValue = 0;
+
+	for (int i = 0; i < functionPar.size(); i++) {
+
+		returnValue += (functionPar[i] * pow(variablePar, i));
+
+	}
+
+	return returnValue;
+}
+
+int getSize(string fileNamePar) {
+
+	ifstream inputFile;
+
+	int fileSize = 0;
+
+	inputFile.open(fileNamePar);
+
+	if (!inputFile.is_open()) {
+
+		cout << "File cannot be opened.";
+
+		exit(0);
+	}
+
+	inputFile >> fileSize;
+
+	inputFile.close();
+
+	return fileSize;
+}
+
+vector<float> getFunction(int vectorSizePar, string fileNamePar) {
+
+	ifstream inputFile;
+
+	vector<float> returnVector;
+
+	double dump;
+
+	returnVector.resize(vectorSizePar);
+
+	inputFile.open(fileNamePar);
+
+	inputFile >> dump;
+
+	for (int i = 0; i < vectorSizePar; i++) {
+
+		inputFile >> returnVector[i];
+
+	}
+
+	inputFile.close();
+
+	return returnVector;
+}
+
+vector<float> getDerivative(vector<float> inputFunctionPar) {
+
+	vector<float> returnVector;
+
+	returnVector.resize(inputFunctionPar.size() - 1);
+
+	for (int i = 0; i < returnVector.size(); i++) {
+
+		returnVector[i] = (inputFunctionPar[i + 1] * (i + 1));
+	}
+
+	return returnVector;
+}
+
+float functionSecant(float a, float b, long long maxIterPar, vector<float> functionPar) {
+
+	float fa = 0;
+	float fb = 0;
+	float d = 0;
+
+	fa = applyFunction(a, functionPar);
+	fb = applyFunction(b, functionPar);
+
+
+	for (int i = 1; i <= maxIterPar; i++) {
+
+		if (abs(fa) > abs(fb)) {
+
+			swap(a, b);
+			swap(fa, fb);
+
+		}
+
+		//checks if d calculation will be undefined
+		if ((fb - fa) == 0) {
+
+			cout << "Algorithm has converged after " << i << " iterations!" << endl;
+
+			return a;
+
+		}
+
+		d = (b - a) / (fb - fa);
+		b = a;
+		fb = fa;
+		d *= fa;
+
+		if (d == 0 || d == -0) {
+
+			cout << "Algorithm has converged after " << i << " iterations!" << endl;
+
+			return a;
+
+		}
+
+		a -= d;
+		fa = applyFunction(a, functionPar);
+
+	}
+
+	cout << "Max iterations reached without convergence..." << endl;
+	return a;
+
+}
+
+float functionNewton(float x, long long maxIterPar, vector<float> functionPar) {
+
+	float delta = .00001;
+	float fx = 0;
+	float fd = 0;
+	float d = 0;
+
+	vector<float> derivativePar;
+	derivativePar.resize(functionPar.size() - 1);
+
+	derivativePar = getDerivative(functionPar);
+
+	fx = applyFunction(x, functionPar);
+
+	for (int i = 1; i <= maxIterPar; i++) {
+
+		fd = applyFunction(x, derivativePar);
+
+		if (abs(fd) < delta) {
+
+			cout << "Small slope!";
+
+			return x;
+
+		}
+
+		d = fx / fd;
+		x -= d;
+		fx = applyFunction(x, functionPar);
+
+		if (d == 0 || d == -0) {
+
+			cout << "Algorithm has converged after " << i << " iterations!" << endl;
+
+			return x;
+
+		}
+
+	}
+
+	cout << "Max iterations reached by newton without convergence..." << endl;
+	return x;
+
+}
+
+float functionBisection(float a, float b, long long maxIterPar, vector<float> functionPar) {
+
+	float c = 0;
+	float fa = 0;
+	float fb = 0;
+	float fc = 0;
+	float error;
+
+	fa = applyFunction(a, functionPar);
+	fb = applyFunction(b, functionPar);
+
+	if ((fa * fb) >= 0) {
+
+		cout << "Inadequate values for a and b." << endl;
+
+		exit(0);
+
+	}
+
+	error = b - a;
+
+	for (int i = 1; i <= maxIterPar; i++) {
+
+		error = error / 2;
+		c = a + error;
+		fc = applyFunction(c, functionPar);
+
+		if (error == 0 || error == -0) {
+
+			cout << "Algorithm has converged after " << i << " iterations!" << endl;
+
+			return c;
+
+		}
+
+		if ((fa * fc) < 0) {
+
+			b = c;
+			fb = fc;
+
+		}
+		else {
+
+			a = c;
+			fa = fc;
+		}
+
+	}
+
+	cout << "Max iterations reached for bisection without convergence..." << endl;
+	return c;
+
+}
+
+float functionHybrid(float a, float b, long long maxIterPar, vector<float> functionPar) {
+
+	return (functionNewton(functionBisection(a, b, 5, functionPar), (maxIterPar - 5), functionPar));
+
+}
 
 int main(int argc, char* argv[]) {
 
 	long long maxIt = 10000;
+
+	int polySize;
 
 	float initialPoint1 = 0;
 	float initialPoint2 = 0;
@@ -15,9 +251,14 @@ int main(int argc, char* argv[]) {
 	bool secTag = false;
 	bool newtTag = false;
 	bool hybridTag = false;
+	bool hasDot = false;
 
-	string fileName;
-	string userInput;
+	vector<float> userFunction;
+
+	string fileName = "";
+	string fileTitle = "";
+	string fileType = "";
+	string userInput = "";
 
 	if (argc < 3) {
 
@@ -294,7 +535,70 @@ int main(int argc, char* argv[]) {
 		return 0;
 	}
 
-	cout << newtTag << " " << secTag << " " << hybridTag << " " << maxIt << " " << initialPoint1 << " " << initialPoint2 << " " << fileName << endl;
+	for (int i = 0; i < fileName.length(); i++) {
 
+		if (hasDot == false) {
+
+			fileTitle += fileName[i];
+		}
+
+		if (hasDot == true) {
+
+			fileType += fileName[i];
+
+		}
+
+		if (fileName[i] == '.') {
+
+			hasDot = true;
+
+		}
+
+	}
+
+	if (fileType != "pol") {
+
+		cout << "Invalid file type. Must be of type pol." << endl;
+
+		return 0;
+
+	}
+
+	polySize = (getSize(fileName) + 1);
+
+	userFunction.resize(polySize);
+
+	userFunction = getFunction(polySize, fileName);
+
+	reverse(userFunction.begin(), userFunction.end());
+
+	if (newtTag == true) {
+
+		cout << functionNewton(initialPoint1, maxIt, userFunction);
+
+	}
+	else {
+
+		if (secTag == true) {
+
+			cout << functionSecant(initialPoint1, initialPoint2, maxIt, userFunction);
+
+		}
+		else {
+
+			if (hybridTag == true) {
+
+				cout << functionHybrid(initialPoint1, initialPoint2, maxIt, userFunction);
+
+			}
+			else {
+
+				cout << functionBisection(initialPoint1, initialPoint2, maxIt, userFunction);
+
+			}
+		}
+
+	}
+	
 	return 0;
 }
