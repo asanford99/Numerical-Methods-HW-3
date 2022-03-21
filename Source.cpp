@@ -83,7 +83,9 @@ vector<float> getDerivative(vector<float> inputFunctionPar) {
 	return returnVector;
 }
 
-float functionSecant(float a, float b, long long maxIterPar, vector<float> functionPar) {
+float functionSecant(float a, float b, long long maxIterPar, vector<float> functionPar, string fileTitle) {
+
+	ofstream outputFile;
 
 	float fa = 0;
 	float fb = 0;
@@ -107,6 +109,12 @@ float functionSecant(float a, float b, long long maxIterPar, vector<float> funct
 
 			cout << "Algorithm has converged after " << i << " iterations!" << endl;
 
+			outputFile.open(fileTitle + "sol");
+
+			outputFile << a << " " << i << " success";
+
+			outputFile.close();
+
 			return a;
 
 		}
@@ -120,6 +128,12 @@ float functionSecant(float a, float b, long long maxIterPar, vector<float> funct
 
 			cout << "Algorithm has converged after " << i << " iterations!" << endl;
 
+			outputFile.open(fileTitle + "sol");
+
+			outputFile << a << " " << i << " success";
+
+			outputFile.close();
+
 			return a;
 
 		}
@@ -130,11 +144,20 @@ float functionSecant(float a, float b, long long maxIterPar, vector<float> funct
 	}
 
 	cout << "Max iterations reached without convergence..." << endl;
+
+	outputFile.open(fileTitle + "sol");
+
+	outputFile << a << " " << maxIterPar << " fail";
+
+	outputFile.close();
+
 	return a;
 
 }
 
-float functionNewton(float x, long long maxIterPar, vector<float> functionPar) {
+float functionNewton(float x, long long maxIterPar, vector<float> functionPar, string fileTitle) {
+
+	ofstream outputFile;
 
 	float delta = .00001;
 	float fx = 0;
@@ -156,6 +179,12 @@ float functionNewton(float x, long long maxIterPar, vector<float> functionPar) {
 
 			cout << "Small slope!";
 
+			outputFile.open(fileTitle + "sol");
+
+			outputFile << x << " " << i << " fail";
+
+			outputFile.close();
+
 			return x;
 
 		}
@@ -168,6 +197,12 @@ float functionNewton(float x, long long maxIterPar, vector<float> functionPar) {
 
 			cout << "Algorithm has converged after " << i << " iterations!" << endl;
 
+			outputFile.open(fileTitle + "sol");
+
+			outputFile << x << " " << i << " success";
+
+			outputFile.close();
+
 			return x;
 
 		}
@@ -175,11 +210,20 @@ float functionNewton(float x, long long maxIterPar, vector<float> functionPar) {
 	}
 
 	cout << "Max iterations reached by newton without convergence..." << endl;
+
+	outputFile.open(fileTitle + "sol");
+
+	outputFile << x << " " << maxIterPar << " fail";
+
+	outputFile.close();
+
 	return x;
 
 }
 
-float functionBisection(float a, float b, long long maxIterPar, vector<float> functionPar) {
+float functionBisection(float a, float b, long long maxIterPar, vector<float> functionPar, string fileTitle) {
+
+	ofstream outputFile;
 
 	float c = 0;
 	float fa = 0;
@@ -210,6 +254,12 @@ float functionBisection(float a, float b, long long maxIterPar, vector<float> fu
 
 			cout << "Algorithm has converged after " << i << " iterations!" << endl;
 
+			outputFile.open(fileTitle + "sol");
+
+			outputFile << c << " " << i << " success";
+
+			outputFile.close();
+
 			return c;
 
 		}
@@ -229,13 +279,22 @@ float functionBisection(float a, float b, long long maxIterPar, vector<float> fu
 	}
 
 	cout << "Max iterations reached for bisection without convergence..." << endl;
+
+	//creates a file and store output info in it
+	outputFile.open(fileTitle + "sol");
+
+	outputFile << c << " " << maxIterPar << " fail";
+
+	outputFile.close();
+
+
 	return c;
 
 }
 
-float functionHybrid(float a, float b, long long maxIterPar, vector<float> functionPar) {
+float functionHybrid(float a, float b, long long maxIterPar, vector<float> functionPar, string fileTitle) {
 
-	return (functionNewton(functionBisection(a, b, 5, functionPar), (maxIterPar - 5), functionPar));
+	return (functionNewton(functionBisection(a, b, 5, functionPar, fileTitle), (maxIterPar - 5), functionPar, fileTitle));
 
 }
 
@@ -280,14 +339,41 @@ int main(int argc, char* argv[]) {
 
 	case 4:
 
+		if (string(argv[1]) == "-newt") {
+
+			newtTag = true;
+
+			if (!strtof(argv[2], NULL)) {
+
+				if (string(argv[2]) != "0") {
+
+					cout << "Invalid input. Must use this format: polRoot [-newt, -sec, -hybrid] [-maxIt n] initP [initP2] polyFileName." << endl;
+					return 0;
+
+				}
+
+			}
+
+			initialPoint1 = stof(argv[2]);
+			fileName = argv[3];
+
+			break;
+		}
+
 		if (strtof(argv[1], NULL)) {
+
+			Bypass0:
 
 			initialPoint1 = stof(argv[1]);
 
-			if (!stof(argv[2], NULL)) {
+			if (!strtof(argv[2], NULL)) {
 
-				cout << "Invalid input. Must use this format: polRoot [-newt, -sec, -hybrid] [-maxIt n] initP [initP2] polyFileName." << endl;
-				return 0;
+				if (string(argv[2]) != "0") {
+
+					cout << "Invalid input. Must use this format: polRoot [-newt, -sec, -hybrid] [-maxIt n] initP [initP2] polyFileName." << endl;
+					return 0;
+
+				}
 
 			}
 
@@ -297,22 +383,13 @@ int main(int argc, char* argv[]) {
 			break;
 		}
 
-		if (string(argv[1]) == "-newt") {
+		if (string(argv[1]) == "0") {
 
-			newtTag = true;
+			goto Bypass0;
 
-			if (!strtof(argv[2], NULL)) {
-
-				cout << "Invalid input. Must use this format: polRoot [-newt, -sec, -hybrid] [-maxIt n] initP [initP2] polyFileName." << endl;
-				return 0;
-
-			}
-
-			initialPoint1 = stof(argv[2]);
-			fileName = argv[3];
-
-			break;
 		}
+
+		
 
 		cout << "Invalid input. Must use this format: polRoot [-newt, -sec, -hybrid] [-maxIt n] initP [initP2] polyFileName." << endl;
 		return 0;
@@ -325,8 +402,12 @@ int main(int argc, char* argv[]) {
 
 			if (!strtof(argv[2], NULL)) {
 
-				cout << "Invalid input. Must use this format: polRoot [-newt, -sec, -hybrid] [-maxIt n] initP [initP2] polyFileName." << endl;
-				return 0;
+				if (string(argv[2]) != "0") {
+
+					cout << "Invalid input. Must use this format: polRoot [-newt, -sec, -hybrid] [-maxIt n] initP [initP2] polyFileName." << endl;
+					return 0;
+
+				}
 
 			}
 
@@ -334,8 +415,12 @@ int main(int argc, char* argv[]) {
 
 			if (!strtof(argv[3], NULL)) {
 
-				cout << "Invalid input. Must use this format: polRoot [-newt, -sec, -hybrid] [-maxIt n] initP [initP2] polyFileName." << endl;
-				return 0;
+				if (string(argv[3]) != "0") {
+
+					cout << "Invalid input. Must use this format: polRoot [-newt, -sec, -hybrid] [-maxIt n] initP [initP2] polyFileName." << endl;
+					return 0;
+
+				}
 
 			}
 
@@ -351,8 +436,12 @@ int main(int argc, char* argv[]) {
 
 			if (!strtof(argv[2], NULL)) {
 
-				cout << "Invalid input. Must use this format: polRoot [-newt, -sec, -hybrid] [-maxIt n] initP [initP2] polyFileName." << endl;
-				return 0;
+				if (string(argv[2]) != "0") {
+
+					cout << "Invalid input. Must use this format: polRoot [-newt, -sec, -hybrid] [-maxIt n] initP [initP2] polyFileName." << endl;
+					return 0;
+
+				}
 
 			}
 
@@ -360,8 +449,12 @@ int main(int argc, char* argv[]) {
 
 			if (!strtof(argv[3], NULL)) {
 
-				cout << "Invalid input. Must use this format: polRoot [-newt, -sec, -hybrid] [-maxIt n] initP [initP2] polyFileName." << endl;
-				return 0;
+				if (string(argv[3]) != "0") {
+
+					cout << "Invalid input. Must use this format: polRoot [-newt, -sec, -hybrid] [-maxIt n] initP [initP2] polyFileName." << endl;
+					return 0;
+
+				}
 
 			}
 
@@ -389,8 +482,12 @@ int main(int argc, char* argv[]) {
 
 			if (!strtof(argv[3], NULL)) {
 
-				cout << "Invalid input. Must use this format: polRoot [-newt, -sec, -hybrid] [-maxIt n] initP [initP2] polyFileName." << endl;
-				return 0;
+				if (string(argv[3]) != "0") {
+
+					cout << "Invalid input. Must use this format: polRoot [-newt, -sec, -hybrid] [-maxIt n] initP [initP2] polyFileName." << endl;
+					return 0;
+
+				}
 
 			}
 
@@ -398,8 +495,12 @@ int main(int argc, char* argv[]) {
 
 			if (!strtof(argv[4], NULL)) {
 
-				cout << "Invalid input. Must use this format: polRoot [-newt, -sec, -hybrid] [-maxIt n] initP [initP2] polyFileName." << endl;
-				return 0;
+				if (string(argv[4]) != "0") {
+
+					cout << "Invalid input. Must use this format: polRoot [-newt, -sec, -hybrid] [-maxIt n] initP [initP2] polyFileName." << endl;
+					return 0;
+
+				}
 
 			}
 
@@ -431,8 +532,12 @@ int main(int argc, char* argv[]) {
 
 			if (!strtof(argv[4], NULL)) {
 
-				cout << "Invalid input. Must use this format: polRoot [-newt, -sec, -hybrid] [-maxIt n] initP [initP2] polyFileName." << endl;
-				return 0;
+				if (string(argv[4]) != "0") {
+
+					cout << "Invalid input. Must use this format: polRoot [-newt, -sec, -hybrid] [-maxIt n] initP [initP2] polyFileName." << endl;
+					return 0;
+
+				}
 
 			}
 
@@ -469,8 +574,12 @@ int main(int argc, char* argv[]) {
 
 			if (!strtof(argv[4], NULL)) {
 
-				cout << "Invalid input. Must use this format: polRoot [-newt, -sec, -hybrid] [-maxIt n] initP [initP2] polyFileName." << endl;
-				return 0;
+				if (string(argv[4]) != "0") {
+
+					cout << "Invalid input. Must use this format: polRoot [-newt, -sec, -hybrid] [-maxIt n] initP [initP2] polyFileName." << endl;
+					return 0;
+
+				}
 
 			}
 
@@ -478,8 +587,12 @@ int main(int argc, char* argv[]) {
 
 			if (!strtof(argv[5], NULL)) {
 
-				cout << "Invalid input. Must use this format: polRoot [-newt, -sec, -hybrid] [-maxIt n] initP [initP2] polyFileName." << endl;
-				return 0;
+				if (string(argv[5]) != "0") {
+
+					cout << "Invalid input. Must use this format: polRoot [-newt, -sec, -hybrid] [-maxIt n] initP [initP2] polyFileName." << endl;
+					return 0;
+
+				}
 
 			}
 
@@ -511,8 +624,12 @@ int main(int argc, char* argv[]) {
 
 			if (!strtof(argv[4], NULL)) {
 
-				cout << "Invalid input. Must use this format: polRoot [-newt, -sec, -hybrid] [-maxIt n] initP [initP2] polyFileName." << endl;
-				return 0;
+				if (string(argv[4]) != "0") {
+
+					cout << "Invalid input. Must use this format: polRoot [-newt, -sec, -hybrid] [-maxIt n] initP [initP2] polyFileName." << endl;
+					return 0;
+
+				}
 
 			}
 
@@ -520,8 +637,12 @@ int main(int argc, char* argv[]) {
 
 			if (!strtof(argv[5], NULL)) {
 
-				cout << "Invalid input. Must use this format: polRoot [-newt, -sec, -hybrid] [-maxIt n] initP [initP2] polyFileName." << endl;
-				return 0;
+				if (string(argv[5]) != "0") {
+
+					cout << "Invalid input. Must use this format: polRoot [-newt, -sec, -hybrid] [-maxIt n] initP [initP2] polyFileName." << endl;
+					return 0;
+
+				}
 
 			}
 
@@ -574,31 +695,31 @@ int main(int argc, char* argv[]) {
 
 	if (newtTag == true) {
 
-		cout << functionNewton(initialPoint1, maxIt, userFunction);
+		cout << functionNewton(initialPoint1, maxIt, userFunction, fileTitle);
 
 	}
 	else {
 
 		if (secTag == true) {
 
-			cout << functionSecant(initialPoint1, initialPoint2, maxIt, userFunction);
+			cout << functionSecant(initialPoint1, initialPoint2, maxIt, userFunction, fileTitle);
 
 		}
 		else {
 
 			if (hybridTag == true) {
 
-				cout << functionHybrid(initialPoint1, initialPoint2, maxIt, userFunction);
+				cout << functionHybrid(initialPoint1, initialPoint2, maxIt, userFunction, fileTitle);
 
 			}
 			else {
 
-				cout << functionBisection(initialPoint1, initialPoint2, maxIt, userFunction);
+				cout << functionBisection(initialPoint1, initialPoint2, maxIt, userFunction, fileTitle);
 
 			}
 		}
 
 	}
-	
+
 	return 0;
 }
